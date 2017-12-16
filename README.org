@@ -1,0 +1,7 @@
+* Class Closure
+Graph the [[http://michaelfeathers.typepad.com/michael_feathers_blog/2012/12/the-active-set-of-classes.html][active set of classes]] for a github repo
+
+
+* Development
+** To start
+=(figwheel-up)=
