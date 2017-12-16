@@ -1,7 +1,29 @@
 * Class Closure
 Graph the [[http://michaelfeathers.typepad.com/michael_feathers_blog/2012/12/the-active-set-of-classes.html][active set of classes]] for a github repo
 
+* Usage
+#+BEGIN_SRC sh
+  $ ./scripts/run
+#+END_SRC
+The charts are generated in two steps.  First the data are collected
+from the git history by a shell script.  And then the data are
+visualized by an HTML page with =chart.js=.
 
+** Analysis
+#+BEGIN_SRC sh :tangle ./scripts/analyze :shebang "#!/bin/bash"
+  project_directory=~/projects/threadstreaks
+  header="filename,last-commit,first-commit"
+
+  git -C $project_directory ls-tree --full-tree -r HEAD | awk '{ print $4 "," $3 }' > ./data/closures.csv
+
+  filenames=$(cat ./data/closures.csv | awk -F "," '{ print $1 }')
+  echo "$filenames" | xargs -L 1 git -C $project_directory log --follow --diff-filter=A --find-renames=40% -- | ag ^commit | awk '{ print $2 }' > ./data/first-commits
+
+  echo "$({ echo "filenames,last-commit,first-commit" ; paste -d ',' ./data/closures.csv ./data/first-commits ; })" > ./data/closures.csv
+
+#+END_SRC
+
+** Visualization
 * Development
 ** To start
 =(figwheel-up)=
