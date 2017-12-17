@@ -1,11 +1,17 @@
 #!/bin/bash
 
 project_directory=~/projects/threadstreaks
-header="filename,last-commit,first-commit"
+closures_header="filename,first-commit,last-commit"
+dates_header="commit,date"
 
-git -C $project_directory ls-tree --full-tree -r HEAD | awk '{ print $4 "," $3 }' > ./data/closures.csv
+filenames=$(git -C $project_directory ls-tree --full-tree -r HEAD | awk '{ print $4 }')
 
-filenames=$(cat ./data/closures.csv | awk -F "," '{ print $1 }')
+echo "$filenames"> ./data/filenames
+
+echo "$(echo "$filenames" | xargs -L 1 git -C $project_directory log -1 --pretty=format:"%H%n" -- )"> ./data/last-commits
+
 echo "$filenames" | xargs -L 1 git -C $project_directory log --follow --diff-filter=A --find-renames=40% -- | ag ^commit | awk '{ print $2 }' > ./data/first-commits
 
-echo "$({ echo "filenames,last-commit,first-commit" ; paste -d ',' ./data/closures.csv ./data/first-commits ; })" > ./data/closures.csv
+echo "$({ echo "$closures_header" ; paste -d ',' ./data/filenames ./data/first-commits ./data/last-commits ; })" > ./data/closures.csv
+
+echo "$({ echo "$dates_header" ; git -C $project_directory log --pretty=format:"%H %ci" HEAD | awk '{ print $1 "," $2}' ; })" > ./data/dates.csv
