@@ -35,7 +35,15 @@
                                                     :output-dir "resources/public/js/out"
                                                     :optimizations :none
                                                     :recompile-dependents true
-                                                    :source-map true}}]}}
+                                                    :source-map true}}
+                                        {:id "production"
+                                         :source-paths ["src"]
+                                         :compiler {:main "class-closure.core"
+                                                    :asset-path "js/out"
+                                                    :output-to "resources/public/js/main.js"
+                                                    :output-dir "resources/public/js/out/prod"
+                                                    :optimizations :advanced
+                                                    :pretty-print false}}]}}
              :uberjar {:env {:production true}
                        :source-paths ["src"]
                        :prep-tasks ["compile" ["cljsbuild" "once"]]
