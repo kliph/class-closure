@@ -1,24 +1,26 @@
 (ns class-closure.loader
-  (:require-macros [cljs.core.async.macros :refer [go-loop]])
-  (:require [cljs.core.async :refer [chan <! put!]]
+  (:require [goog.net.XhrIo :as xhr]
             [class-closure.state :as state]))
 
-(defn read-csv [csv]
-  (js/console.log csv))
+(defn GET [url callback]
+  (xhr/send url
+            callback))
 
-(def csv->json
-  (map #(-> %
-            .-target
-            .-result
-            read-csv)))
+(defn assoc-in-state [k]
+  (fn [e]
+    (let [text (-> e
+                   .-target
+                   .getResponseText)]
+      (swap! state/app-state assoc k text))))
 
-(def file-reads (chan 1 csv->json))
+(defn get-dates []
+  (GET "/dates.csv"
+       (assoc-in-state :dates)))
 
-(go-loop []
-  (let [text (<! file-reads)]
-    (swap! state/app-state assoc :dates text)))
+(defn get-closures []
+  (GET "/closures.csv"
+       (assoc-in-state :closures)))
 
-(let [reader (js/FileReader.)]
-  (set! (.-onload reader) #(put! file-reads %))
-  (js/console.log "ayy")
-  (.readAsText reader "data/dates.csv"))
+(defn init []
+  (get-dates)
+  (get-closures))
