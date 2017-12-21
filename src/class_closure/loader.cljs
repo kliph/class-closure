@@ -11,7 +11,10 @@
     (let [text (-> e
                    .-target
                    .getResponseText)]
-      (swap! state/app-state assoc k text))))
+      (swap! state/app-state assoc k text)
+      (when (and (@state/app-state :dates false)
+                 (@state/app-state :closures false))
+        (swap! state/app-state assoc :loaded true)))))
 
 (defn get-dates []
   (GET "/dates.csv"

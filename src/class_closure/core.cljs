@@ -7,8 +7,10 @@
             [goog.date]))
 
 (def by-id goog.dom.getElement)
+(def banal-blue "#2f588b")
+(def ugly-green "#5d9649")
 
-(defn data-for-chart []
+(defn data-for-chart [chart-data]
   (let [dates-csv (@state/app-state :dates)
         closures-csv (@state/app-state :closures)
         dates (->> (clojure.string/split dates-csv "\n")
@@ -30,51 +32,48 @@
                           (into #{})
                           (into [])
                           sort)
-        d (nth commit-dates 3)
+        d (nth commit-dates 3 [])
         get-counts (fn [dataset]
                      (->> (map (fn [d]
                                  (-> (filter (fn [[k v]] (= d v)) dataset)
                                      count))
                                commit-dates)
                           (reductions +)))
-        first-counts (get-counts first-commits)
-        last-counts (get-counts last-commits)]
-    {:open-files first-counts
-     :commit-dates commit-dates
-     :closed-files last-counts}))
+        open-files (get-counts first-commits)
+        closed-files (get-counts last-commits)]
+    (assoc chart-data :data {:labels commit-dates
+                             :datasets [{:data open-files
+                                         :label "Open Files"
+                                         :lineTension 0
+                                         :borderColor banal-blue}
+                                        {:data closed-files
+                                         :label "Closed Files"
+                                         :lineTension 0
+                                         :borderColor ugly-green}]})))
 
-(defn render-to-chart [data]
+(defn render-to-chart [chart-data]
   (let [context (-> (by-id "chart")
-                    (.getContext "2d"))
-        banal-blue "#2f588b"
-        ugly-green "#5d9649"
-        chart-data {:type "line"
-                    :data {:labels (:commit-dates data)
-                           :datasets [{:data (:open-files data)
-                                       :label "Open Files"
-                                       :lineTension 0
-                                       :borderColor banal-blue}
-                                      {:data (:closed-files data)
-                                       :label "Closed Files"
-                                       :lineTension 0
-                                       :borderColor ugly-green}]}}]
+                    (.getContext "2d"))]
     (js/Chart. context (clj->js chart-data))))
 
 (defn render-chart []
-  (js/setTimeout
-   (fn []
-     (-> (data-for-chart)
-         render-to-chart))
-   200))
+  (-> (data-for-chart {:type "line"})
+      render-to-chart))
 
 (defn app-container []
-  (r/create-class
-   {:component-did-mount #(render-chart)
-    :display-name "app-container"
-    :get-initial-state (fn [] (class-closure.loader/init))
-    :reagent-render (fn []
-                      [:canvas {:id "chart"
-                                :width "700"
-                                :height "380"}])}))
+  (fn []
+    (class-closure.loader/init)
+    (if (@state/app-state :loaded)
+      (r/create-class
+       {:component-did-mount #(render-chart)
+        :component-did-update #(render-chart)
+        :display-name "app-container"
+        :reagent-render (fn []
+                          [:canvas {:id "chart"
+                                    :width "700"
+                                    :height "380"}])})
+      [:p "Loading"])))
+
+
 
 (r/render-component [app-container] (by-id "app"))
