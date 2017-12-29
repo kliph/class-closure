@@ -3,4 +3,5 @@
 
 (def app-state (r/atom {:loaded false
                         :dates nil
+                        :chart-base {:type "line"}
                         :closures nil}))

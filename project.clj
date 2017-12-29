@@ -9,6 +9,7 @@
   :dependencies [[org.clojure/clojure "1.9.0-RC2"]
                  [org.clojure/clojurescript "1.9.946"]
                  [reagent "0.8.0-alpha1"]
+                 [cljsjs/moment "2.17.1-1"]
                  [cljsjs/chartjs "2.6.0-0"]
                  [compojure "1.6.0"]
                  [ring/ring-jetty-adapter "1.6.2"]

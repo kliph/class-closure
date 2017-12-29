@@ -1,6 +1,8 @@
 (ns class-closure.core
   (:require [reagent.core :as r]
+            [class-closure.chart-helper :as chart]
             [class-closure.state :as state]
+            [cljsjs.moment]
             [cljsjs.chartjs]
             [goog.dom]
             [class-closure.loader]
@@ -54,26 +56,37 @@
 (defn render-to-chart [chart-data]
   (let [context (-> (by-id "chart")
                     (.getContext "2d"))]
+    (chart/chart-js-map (fn [instance]
+                          (.destroy instance))
+                        (.-instances js/Chart))
     (js/Chart. context (clj->js chart-data))))
 
 (defn render-chart []
-  (-> (data-for-chart {:type "line"})
+  (-> (data-for-chart (:chart-base @state/app-state))
       render-to-chart))
 
-(defn app-container []
-  (fn []
-    (class-closure.loader/init)
+(defn chart [base-chart]
+  (class-closure.loader/init)
+  (fn [base-chart]
     (if (@state/app-state :loaded)
       (r/create-class
        {:component-did-mount #(render-chart)
         :component-did-update #(render-chart)
         :display-name "app-container"
-        :reagent-render (fn []
+        :reagent-render (fn [base-chart]
                           [:canvas {:id "chart"
                                     :width "700"
-                                    :height "380"}])})
+                                    :height "350"}])})
       [:p "Loading"])))
 
+(defn toggle-month-view! []
+  (if (contains? (@state/app-state :chart-base) :options)
+    (swap! state/app-state update-in [:chart-base] dissoc :options)
+    (swap! state/app-state update-in [:chart-base] merge chart/month-options)))
 
+(defn app-container []
+  [:div
+   [chart (@state/app-state :chart-base)]
+   [:button {:on-click toggle-month-view!} "Toggle Calendar/Ordinal"]])
 
 (r/render-component [app-container] (by-id "app"))
